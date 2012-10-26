@@ -1,0 +1,83 @@
+<!docytpe html>
+
+<html>
+
+<head>
+
+	<meta name="author" content="Maurycy Skier" />
+
+	<title>Disk sectors visualizer</title>
+
+	<script src="parser.js"></script>
+	<script src="disk.js"></script>
+
+	<script>
+
+		document.addEventListener( "DOMContentLoaded", function() {
+
+			var text = [
+				"Drive testing",
+				"Model : WDC WD2500BEVS-60UST0                   ",
+				"Firmware : 01.01A01",
+				"Serial :      WD-WXE108M82885",
+				"LBA : 488397168",
+				"Start LBA : 0",
+				"End LBA : 488397168",
+				"Block size : 256",
+				"",
+				"Block start at 256 time 282ms",
+				"Block start at 14848 time 141ms"
+			].join( "\n");
+
+			/*var*/ parser = new Parser();
+
+			var LBA, blockSize, data;
+
+			parser.on( "header", function( header ) {
+				// console.log( "Header:", header );
+				document.title += ": " + header["Model"];
+				LBA = header["End LBA"];
+				blockSize = header["Block size"];
+			} );
+
+			parser.on( "data", function() {
+				var disk = new Disk( LBA, blockSize, data );
+			} );
+
+			parser.on( "error", function( message ) {
+				alert( message );
+			} );
+
+			parser.feed( text );
+
+		}, false );
+
+	</script>
+
+	<style>
+
+		.cdef {
+			background-color: #4d2f2f;
+		}
+		.c50 {
+			background-color: #643c3c;
+		}
+		.c150 {
+			background-color: #2e502e;
+		}
+		.c500 {
+			background-color: #ff7a00;
+		}
+		.cbad {
+			background-color: #24233b;
+		}
+
+	</style>
+
+</head>
+
+<body>
+
+</body>
+
+</html>
