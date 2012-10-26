@@ -15,23 +15,11 @@
 
 		document.addEventListener( "DOMContentLoaded", function() {
 
-			var text = [
-				"Drive testing",
-				"Model : WDC WD2500BEVS-60UST0                   ",
-				"Firmware : 01.01A01",
-				"Serial :      WD-WXE108M82885",
-				"LBA : 488397168",
-				"Start LBA : 0",
-				"End LBA : 488397168",
-				"Block size : 256",
-				"",
-				"Block start at 256 time 282ms",
-				"Block start at 14848 time 141ms"
-			].join( "\n");
+			var text = document.getElementById( "input" ).value;
 
 			/*var*/ parser = new Parser();
 
-			var LBA, blockSize, data;
+			var LBA, blockSize;
 
 			parser.on( "header", function( header ) {
 				// console.log( "Header:", header );
@@ -40,8 +28,11 @@
 				blockSize = header["Block size"];
 			} );
 
-			parser.on( "data", function() {
-				var disk = new Disk( LBA, blockSize, data );
+			parser.on( "data", function( data ) {
+				// var disk = new Disk( LBA, blockSize, data );
+				// disk.sizes( 800, 600, 6, 10 );
+				// disk.visualize();
+				console.log( data );
 			} );
 
 			parser.on( "error", function( message ) {
@@ -77,6 +68,49 @@
 </head>
 
 <body>
+
+	<textarea id="input">Drive testing
+Model : WDC WD2500BEVS-60UST0                   
+Firmware : 01.01A01
+Serial :      WD-WXE108M82885
+LBA : 488397168
+Start LBA : 0
+End LBA : 488397168
+Block size : 256
+
+Block start at 256 time 282ms
+Block start at 14848 time 141ms
+Block start at 16128 time 125ms
+Block start at 21760 time 62ms
+Block start at 44288 time 78ms
+Block start at 45056 time 78ms
+Block start at 46080 time 78ms
+Block start at 46592 time 78ms
+Block start at 47360 time 78ms
+Block start at 47616 time 203ms
+Block start at 48128 time 94ms
+Block start at 54016 time 78ms
+Block start at 55808 time 94ms
+Block start at 63488 time 109ms
+Block start at 64768 time 141ms
+Block start at 65024 time 62ms
+Block start at 65792 time 62ms
+Block start at 70144 time 78ms
+Block start at 83968 time 63ms
+Block start at 98816 time 62ms
+Block start at 108288 time 172ms
+Block start at 115456 time 78ms
+Block start at 120832 time 63ms
+Block start at 122368 time 63ms
+Block start at 132608 time 62ms
+Block start at 137984 time 125ms
+Block start at 141056 time 63ms
+Block start at 152832 time 125ms
+Block start at 153600 time 62ms
+Block start at 153856 time 78ms
+Bad block found, start LBA : 171776
+Bad block found, start LBA : 172800
+	</textarea>
 
 </body>
 
