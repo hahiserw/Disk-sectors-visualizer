@@ -15,13 +15,13 @@ var Disk = function( LBA, blockSize, data, context, info ) {
 };
 
 Disk.prototype.sizes = function( width, height, blockWidth, blockHeight, blockMargin ) {
-	this.width = width - width % blockWidth;
-	this.height = height - height % blockHeight;
+	this.width = width;// - width % blockWidth;
+	this.height = height;// - height % blockHeight;
 	this.blockWidth = blockWidth;
 	this.blockHeight = blockHeight;
 	this.margin = blockMargin;
 	this.blocksPerLine = Math.floor( width / blockWidth );
-	this.blocksPerPage = Math.floor( height / blockHeight )
+	this.blocksPerPage = Math.floor( height / blockHeight );
 };
 
 Disk.prototype.moveOffset = function( x, y, page ) {
@@ -34,6 +34,19 @@ Disk.prototype.moveOffset = function( x, y, page ) {
 	if( 0 <= this.offset + change && this.offset + change <= this.lba )
 		this.offset += change;
 
+};
+
+Disk.prototype.setOffsetStart = function() {
+	this.offset = 0;
+};
+Disk.prototype.setOffsetEnd = function() {
+	this.offset = this.lba - this.blocksPerLine * this.blocksPerPage;
+};
+
+Disk.prototype.changeResolution = function( x, y ) {
+	this.blockWidth += x;
+	this.blockHeight += y;
+	this.sizes( this.width, this.height, this.blockWidth, this.blockHeight, this.margin ); // Lame
 };
 
 // Draws fragment of map according to start block
@@ -101,7 +114,8 @@ Disk.prototype.visualize = function() {
 	// Info text
 	var data =
 		this.offset + " - " + ( this.offset + this.blocksPerLine * this.blocksPerPage ) +
-		" (" + ( Math.round( ( this.offset / this.lba ) / 100 ) * 100 ) + "%)";
+		" / " + this.lba +
+		" (" + ( Math.round( ( this.offset / this.lba ) * 1000000 ) / 10000 ) + "%)";
 	this.info.innerHTML = data;
 
 	this.context.restore();

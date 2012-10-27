@@ -40,7 +40,7 @@
 			parser.on( "data", function( data ) {
 				resizeCanvas( canvas );
 				disk = new Disk( LBA, blockSize, data, ctx, info );
-				disk.sizes( 460, 426, 10, 20, 2 );
+				disk.sizes( canvas.getAttribute( "width" ), canvas.getAttribute( "height" ), 5, 10, 0 );
 				disk.visualize();
 			} );
 
@@ -60,6 +60,13 @@
 			document.addEventListener( "keydown", function( event ) {
 				var goodKey = true;
 				switch( event.keyCode ) {
+					// home, end
+					case 36:
+						disk.setOffsetStart();
+						break;
+					case 35:
+						disk.setOffsetEnd();
+						break;
 					// page up, page down
 					case 33:
 						disk.moveOffset( 0, 0, -1 );
@@ -79,6 +86,13 @@
 						break;
 					case 40:
 						disk.moveOffset( 0, 1, 0 );
+						break;
+					// +, -
+					case 107:
+						disk.changeResolution( 1, 1 );
+						break;
+					case 109:
+						disk.changeResolution( -1, -1 );
 						break;
 					default:
 						goodKey = false;
@@ -132,11 +146,11 @@
 			right: 10px;
 			bottom: 10px;
 			background-color: white;
-			opacity: 1;
+			visibility: visible;
 		}
 
 		#info:hover {
-			opacity: 0;
+			visibility: hidden;
 		}
 
 	</style>
@@ -156,8 +170,7 @@
 			<canvas id="canvas" width="442" height="402">
 				<p>Damn, download a better browser!</p>
 			</canvas>
-			<!-- <input type="button" id="parse" value="Parse" /> -->
-			<span id="info">Hi there!</span>
+			<div id="info">Hi there. Give me some data!</div>
 		</div>
 
 	</div>
