@@ -21,7 +21,8 @@
 			}
 
 			/*var*/ canvas = document.getElementById( "canvas" );
-			var ctx = canvas.getContext( "2d" );
+			/*var*/ ctx = canvas.getContext( "2d" );
+			var info = document.getElementById( "info" );
 
 			if( !ctx )
 				throw new Error( "Cannot initialize canvas!" );
@@ -31,16 +32,15 @@
 			var LBA, blockSize, disk;
 
 			parser.on( "header", function( header ) {
-				// console.log( "Header:", header );
 				document.title = header["Model"];
-				LBA = header["End LBA"];
+				LBA = header["LBA"];
 				blockSize = header["Block size"];
 			} );
 
 			parser.on( "data", function( data ) {
 				resizeCanvas( canvas );
-				disk = new Disk( LBA, blockSize, data, ctx );
-				disk.sizes( 400, 426, 10, 20, 2 );
+				disk = new Disk( LBA, blockSize, data, ctx, info );
+				disk.sizes( 460, 426, 10, 20, 2 );
 				disk.visualize();
 			} );
 
@@ -48,10 +48,10 @@
 				alert( message );
 			} );
 
-			// document.getElementById( "parse" ).addEventListener( "click", function() {
+			document.getElementById( "input" ).addEventListener( "change", function() {
 				var text = document.getElementById( "input" ).value;
 				parser.feed( text, false );
-			// }, false );
+			}, false );
 
 			document.addEventListener( "resize", function() {
 				resizeCanvas( canvas );
@@ -127,6 +127,18 @@
 			margin-top: 54px;
 		}
 
+		#info {
+			position: absolute;
+			right: 10px;
+			bottom: 10px;
+			background-color: white;
+			opacity: 1;
+		}
+
+		#info:hover {
+			opacity: 0;
+		}
+
 	</style>
 
 </head>
@@ -136,48 +148,7 @@
 	<div class="wrapper">
 
 		<div class="twrap">
-			<textarea id="input">Drive testing
-Model : WDC WD2500BEVS-60UST0                   
-Firmware : 01.01A01
-Serial :      WD-WXE108M82885
-LBA : 488397168
-Start LBA : 0
-End LBA : 488397168
-Block size : 256
-
-Block start at 256 time 282ms
-Block start at 14848 time 141ms
-Block start at 16128 time 125ms
-Block start at 21760 time 62ms
-Block start at 44288 time 78ms
-Block start at 45056 time 78ms
-Block start at 46080 time 78ms
-Block start at 46592 time 78ms
-Block start at 47360 time 78ms
-Block start at 47616 time 203ms
-Block start at 48128 time 94ms
-Block start at 54016 time 78ms
-Block start at 55808 time 94ms
-Block start at 63488 time 109ms
-Block start at 64768 time 141ms
-Block start at 65024 time 62ms
-Block start at 65792 time 62ms
-Block start at 70144 time 78ms
-Block start at 83968 time 63ms
-Block start at 98816 time 62ms
-Block start at 108288 time 172ms
-Block start at 115456 time 78ms
-Block start at 120832 time 63ms
-Block start at 122368 time 63ms
-Block start at 132608 time 62ms
-Block start at 137984 time 125ms
-Block start at 141056 time 63ms
-Block start at 152832 time 125ms
-Block start at 153600 time 62ms
-Block start at 153856 time 78ms
-Bad block found, start LBA : 171776
-Bad block found, start LBA : 172800
-			</textarea>
+			<textarea id="input"></textarea>
 		</div>
 
 
@@ -186,6 +157,7 @@ Bad block found, start LBA : 172800
 				<p>Damn, download a better browser!</p>
 			</canvas>
 			<!-- <input type="button" id="parse" value="Parse" /> -->
+			<span id="info">Hi there!</span>
 		</div>
 
 	</div>

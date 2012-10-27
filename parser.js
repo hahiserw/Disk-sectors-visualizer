@@ -16,6 +16,10 @@ var Parser = function() {
 
 Parser.prototype.feed = function( text, onlyBadBlocks ) {
 
+	if( !text )
+		return;
+		// this.error( "No data" );
+
 	onlyBadBlocks = !!onlyBadBlocks;
 
 	var

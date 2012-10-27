@@ -5,11 +5,12 @@
  */
 
 
-var Disk = function( LBA, blockSize, data, context ) {
+var Disk = function( LBA, blockSize, data, context, info ) {
 	this.lba = LBA;
 	this.blockSize = blockSize;
 	this.data = data;
 	this.context = context;
+	this.info = info;
 	this.offset = 0;
 };
 
@@ -24,10 +25,15 @@ Disk.prototype.sizes = function( width, height, blockWidth, blockHeight, blockMa
 };
 
 Disk.prototype.moveOffset = function( x, y, page ) {
-	this.offset +=
+	
+	var change =
 		x +
 		y * this.blocksPerLine +
 		page * this.blocksPerPage * this.blocksPerLine;
+
+	if( 0 <= this.offset + change && this.offset + change <= this.lba )
+		this.offset += change;
+
 };
 
 // Draws fragment of map according to start block
@@ -45,7 +51,7 @@ Disk.prototype.visualize = function() {
 	// Set drawing style for board
 	this.context.save();
 	this.context.fillStyle = "#f5f5f5";
-	this.context.strokeStyle = "#ffffff";
+	// this.context.strokeStyle = "#ffffff";
 	this.context.fillRect( 0, 0, width, height );
 
 	// Draw grid
@@ -91,6 +97,12 @@ Disk.prototype.visualize = function() {
 			this.blockWidth, this.blockHeight );
 		this.context.restore();
 	}
+
+	// Info text
+	var data =
+		this.offset + " - " + ( this.offset + this.blocksPerLine * this.blocksPerPage ) +
+		" (" + ( Math.round( ( this.offset / this.lba ) / 100 ) * 100 ) + "%)";
+	this.info.innerHTML = data;
 
 	this.context.restore();
 
