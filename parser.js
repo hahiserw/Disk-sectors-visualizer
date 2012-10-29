@@ -3,22 +3,30 @@
  *
  * Converts HDDscan for Win2k/XP format to array of blocks with colors.
  * "Block start at 47616 time 203ms" -> 47616 + 2 (block + color)
+ *
+ * First 8 lines are header. Parser reads other lines searching for records
+ * with block's numbers and converts it to array for feature use.
  */
 
 
 var Parser = function() {
-	this.header_length = 9;
+
+	this.headerLength = 9;
+
 	this.header = this.nop;
 	this.data = this.nop;
 	this.error = this.nop;
+
 };
+
+
+Parser.prototype.nop = function() {};
 
 
 Parser.prototype.feed = function( text, onlyBadBlocks ) {
 
 	if( !text )
 		return;
-		// this.error( "No data" );
 
 	onlyBadBlocks = !!onlyBadBlocks;
 
@@ -34,12 +42,14 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 	// A lot of memory for a large text...
 	var lines = text.split( "\n" );
 
-	
-	// First 8 lines are a header.
+	if( lines.length < this.headerLength )
+		return;
 
+	
+	// Header start
 	header["About"] = lines[0]; // No blank lines before header... Not good.
 
-	for( var i = 1; i < this.header_length; i++ )
+	for( var i = 1; i < this.headerLength; i++ )
 	{
 		data = lines[i].match( re.header );
 		if( data !== null ) {
@@ -55,7 +65,7 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 	
 	data = [];
 
-	for( var i = this.header_length, j = 0; i < lines.length; i++ )
+	for( var i = this.headerLength, j = 0; i < lines.length; i++ )
 	{
 		var line = lines[i].match( re.badBlock );
 		// Bad block found, start LBA : \d+
@@ -87,14 +97,13 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 }
 
 
-Parser.prototype.nop = function() {}
-
-
+// For debuging
 Parser.prototype.force = function( event, args ) {
 	this[event].apply( this, args );
-}
+};
 
 
+// Events listeners
 Parser.prototype.on = function( event, callback ) {
 
 	switch( event ) {
@@ -104,9 +113,9 @@ Parser.prototype.on = function( event, callback ) {
 		case "data":
 			this.data = callback;
 			break;
-		case "error":
-			this.error = callback;
-			break;
+		// case "error":
+		// 	this.error = callback;
+		// 	break;
 	}
 
-}
+};

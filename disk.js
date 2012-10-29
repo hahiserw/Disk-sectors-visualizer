@@ -5,58 +5,61 @@
  */
 
 
-var Disk = function( LBA, blockSize, data, context, info ) {
+// Nice constructor :D
+var Disk = function( LBA, blockSize, data ) {
 	this.lba = LBA;
 	this.blockSize = blockSize;
 	this.data = data;
+	this.offset = new Offset( this, LBA );
+};
+
+// Initialize board
+Disk.prototype.board = function( context, info, width, height ) {
 	this.context = context;
 	this.info = info;
-	this.offset = 0;
+	this.width = width;
+	this.height = height;
 };
 
-Disk.prototype.sizes = function( width, height, blockWidth, blockHeight, blockMargin ) {
-	this.width = width;// - width % blockWidth;
-	this.height = height;// - height % blockHeight;
-	this.blockWidth = blockWidth;
-	this.blockHeight = blockHeight;
-	this.margin = blockMargin;
-	this.blocksPerLine = Math.floor( width / blockWidth );
-	this.blocksPerPage = Math.floor( height / blockHeight );
+Disk.prototype.boardResize = function( width, height ) {
+	console.log( "resize", width, height );
+	this.width = width;
+	this.height = height;
+	// Compute quantity of blocks on page once again
+	this.blockStyle( this.blockWidth, this.blockHeight, this.blockMargin );
 };
 
-Disk.prototype.moveOffset = function( x, y, page ) {
-	
-	var change =
-		x +
-		y * this.blocksPerLine +
-		page * this.blocksPerPage * this.blocksPerLine;
-
-	if( 0 <= this.offset + change && this.offset + change <= this.lba )
-		this.offset += change;
-
+// Set style for blocks
+Disk.prototype.blockStyle = function( width, height, margin ) {
+	if( width <= 0 || height <= 0 || margin < 0 )
+		return;
+	this.blockWidth = width;
+	this.blockHeight = height;
+	this.blockMargin = margin;
+	// Full(!) blocks per line
+	this.blocksPerLine =
+		Math.floor( this.width / ( this.blockWidth + this.blockMargin ) );
+	this.blocksPerPage =
+		Math.floor( this.height / ( this.blockHeight + this.blockMargin ) );
 };
 
-Disk.prototype.setOffsetStart = function() {
-	this.offset = 0;
-};
-Disk.prototype.setOffsetEnd = function() {
-	this.offset = this.lba - this.blocksPerLine * this.blocksPerPage;
-};
-
-Disk.prototype.changeResolution = function( x, y ) {
-	this.blockWidth += x;
-	this.blockHeight += y;
-	this.sizes( this.width, this.height, this.blockWidth, this.blockHeight, this.margin ); // Lame
+Disk.prototype.changeBlockStyle = function( x, y, margin ) {
+	margin = margin || this.blockMargin;
+	if( this.blockWidth + x > 0 && this.blockHeight + y > 0 && margin >= 0 )
+		this.blockStyle( this.blockWidth + x, this.blockHeight + y, margin )
 };
 
 // Draws fragment of map according to start block
 Disk.prototype.visualize = function() {
 
-	// colors: oh god (bad block), not that bad, not good, damn
+	if( this.width <= 0 || this.height <= 0 )
+		return;
+
 	var
+		// colors: oh god (bad block), not that bad, not good, damn
 		codes = [ "#000000", "#008000", "#ff8000", "#ff0000" ],
-		blockWidth = this.blockWidth + this.margin,
-		blockHeight = this.blockHeight + this.margin;
+		blockWidth = this.blockWidth + this.blockMargin,
+		blockHeight = this.blockHeight + this.blockMargin;
 	var
 		width = blockWidth * this.blocksPerLine,
 		height = blockHeight * this.blocksPerPage;
@@ -64,22 +67,21 @@ Disk.prototype.visualize = function() {
 	// Set drawing style for board
 	this.context.save();
 	this.context.fillStyle = "#f5f5f5";
-	// this.context.strokeStyle = "#ffffff";
-	this.context.fillRect( 0, 0, width, height );
+	this.context.fillRect( 0, 0, this.width, this.height );
 
 	// Draw grid
-	if( this.margin > 0 ) {
+	if( this.blockMargin > 0 ) {
 		
 		this.context.save();
 		this.context.fillStyle = "#ffffff";
 		
 		// Draw vertical lines
-		for( var x = 0; x < this.blocksPerLine; x++ )
-			this.context.fillRect( x * blockWidth, 0, this.margin, height );
+		for( var x = 0; x <= this.blocksPerLine; x++ )
+			this.context.fillRect( x * blockWidth, 0, this.blockMargin, height );
 
 		// Draw horizontal lines
-		for( var y = 0; y < this.blocksPerPage; y++ )
-			this.context.fillRect( 0, y * blockHeight, width, this.margin );
+		for( var y = 0; y <= this.blocksPerPage; y++ )
+			this.context.fillRect( 0, y * blockHeight, width, this.blockMargin );
 
 		this.context.restore();
 	}
@@ -88,7 +90,7 @@ Disk.prototype.visualize = function() {
 	for( var i = 0; i < this.data.length; i++ )
 	{
 		// Skip to start block
-		if( this.data[i] < this.offset * this.blockSize )
+		if( this.data[i] < this.offset.current * this.blockSize )
 			continue;
 
 		// Draw a block based on index and access time
@@ -96,8 +98,8 @@ Disk.prototype.visualize = function() {
 		var color = this.data[i] % this.blockSize;
 
 		// Compute positions
-		var x = ( index - this.offset ) % this.blocksPerLine;
-		var y = Math.floor( ( index - this.offset ) / this.blocksPerLine );
+		var x = ( index - this.offset.current ) % this.blocksPerLine;
+		var y = Math.floor( ( index - this.offset.current ) / this.blocksPerLine );
 
 		// Stop drawing when end of board is reached
 		if( y >= this.blocksPerPage )
@@ -106,16 +108,16 @@ Disk.prototype.visualize = function() {
 		// Draw block
 		this.context.save();
 		this.context.fillStyle = codes[color];
-		this.context.fillRect( x * blockWidth + this.margin, y * blockHeight + this.margin,
+		this.context.fillRect( x * blockWidth + this.blockMargin, y * blockHeight + this.blockMargin,
 			this.blockWidth, this.blockHeight );
 		this.context.restore();
 	}
-
+// console.log( this.offset, this.blocksPerLine );
 	// Info text
 	var data =
-		this.offset + " - " + ( this.offset + this.blocksPerLine * this.blocksPerPage ) +
+		this.offset.current + " - " + ( this.offset.current + this.blocksPerLine * this.blocksPerPage ) +
 		" / " + this.lba +
-		" (" + ( Math.round( ( this.offset / this.lba ) * 1000000 ) / 10000 ) + "%)";
+		" (" + ( Math.round( ( this.offset.current / this.lba ) * 1000000 ) / 10000 ) + "%)";
 	this.info.innerHTML = data;
 
 	this.context.restore();
@@ -125,20 +127,58 @@ Disk.prototype.visualize = function() {
 // Converts data array to text format
 Disk.prototype.textualize = function( start ) {
 
+	return;
 	// 'Colors'
-	var codes = [ "#", "+", "%", "&" ];
+	var
+		data = "",
+		codes = [ "#", "+", "%", "&" ];
 	// bacground = ".";
 
 	for( var i = 0; i < this.data.length; i++ )
 	{
-		//
+		// Insert checking for range here
+
+		var index = Math.floor( this.data[i] / this.blockSize );
+		var color = this.data[i] % this.blockSize;
+
+		// for( var j = index_last; j < index; j++ )
+		// 	data += ".";
+		// data += codes[color];
+
 	}
 
 };
 
-/*
+var Offset = function( disk, lba ) {
+	this.disk = disk;
+	this.current = 0;
+	this.last = lba;
+};
 
-		var base = ( index - start ) * ( this.blockWidth + this.margin );
-		var x = ( base % this.width ) + this.margin;
-		var y = Math.floor( base / this.width )	* ( this.blockHeight + this.margin ) + this.margin;
-*/
+Offset.prototype.move = function( x, y, page ) {
+
+	var change =
+		x +
+		y * this.disk.blocksPerLine +
+		page * this.disk.blocksPerPage * this.disk.blocksPerLine;
+
+	if( 0 <= this.current + change && this.current + change <= this.last )
+		this.current += change;
+
+};
+
+Offset.prototype.start = function() {
+	this.current = 0;
+};
+
+Offset.prototype.end = function() {
+	this.current = this.last - this.disk.blocksPerLine * this.disk.blocksPerPage;
+};
+
+Offset.prototype.blockPrev = function( bad ) {
+	//
+};
+
+Offset.prototype.blockNext = function( bad ) {
+	//
+};

@@ -8,152 +8,134 @@
 
 	<title>Disk sectors visualizer</title>
 
+	<link rel="stylesheet" href="style.css" />
+
 	<script src="parser.js"></script>
 	<script src="disk.js"></script>
 
 	<script>
 
-		document.addEventListener( "DOMContentLoaded", function() {
+		var Canvas = function( id ) {
 
-			function resizeCanvas( canvas ) {
-				canvas.setAttribute( "width", window.innerWidth );
-				canvas.setAttribute( "height", window.innerHeight - 54 );
+			this.canvas = document.getElementById( id );
+			if( !canvas )
+				throw new Error( "LOL" );
+			this.context = canvas.getContext( "2d" );
+			if( !this.context )
+				throw new Error( "OMG" );
+
+			this.width = 0;
+			this.height = 0;
+
+			this.resize = function() {
+				this.width = window.innerWidth;
+				this.height = window.innerHeight;
+				this.canvas.setAttribute( "width", this.width );
+				this.canvas.setAttribute( "height", this.height );
+				this.afterResize( this.width, this.height );
 			}
 
-			/*var*/ canvas = document.getElementById( "canvas" );
-			/*var*/ ctx = canvas.getContext( "2d" );
+			this.afterResize = function() {}
+
+		};
+
+		document.addEventListener( "DOMContentLoaded", function() {
+
+			// Initialize elements
 			var info = document.getElementById( "info" );
+			var canvas = new Canvas( "canvas" );
+			canvas.resize();
+			window.onresize = function() {
+				canvas.resize();
+			}
 
-			if( !ctx )
-				throw new Error( "Cannot initialize canvas!" );
+			// Base variables
+			var parser, disk, LBA, blockSize;
 
-			var parser = new Parser();
+			// Create parser
+			parser = new Parser();
 
-			var LBA, blockSize, disk;
-
+			// Set base variables
 			parser.on( "header", function( header ) {
 				document.title = header["Model"];
 				LBA = header["LBA"];
 				blockSize = header["Block size"];
 			} );
 
+			// When data has been parsed create disk and draw screen of blocks
 			parser.on( "data", function( data ) {
-				resizeCanvas( canvas );
-				disk = new Disk( LBA, blockSize, data, ctx, info );
-				disk.sizes( canvas.getAttribute( "width" ), canvas.getAttribute( "height" ), 5, 10, 0 );
+				disk = new Disk( LBA, blockSize, data );
+				disk.board( canvas.context, info, canvas.width, canvas.height );
+				disk.blockStyle( 10, 20, 1 );
 				disk.visualize();
-			} );
-
-			parser.on( "error", function( message ) {
-				alert( message );
-			} );
-
-			document.getElementById( "input" ).addEventListener( "change", function() {
-				var text = document.getElementById( "input" ).value;
-				parser.feed( text, false );
-			}, false );
-
-			document.addEventListener( "resize", function() {
-				resizeCanvas( canvas );
-			}, false );
-
-			document.addEventListener( "keydown", function( event ) {
-				var goodKey = true;
-				switch( event.keyCode ) {
-					// home, end
-					case 36:
-						disk.setOffsetStart();
-						break;
-					case 35:
-						disk.setOffsetEnd();
-						break;
-					// page up, page down
-					case 33:
-						disk.moveOffset( 0, 0, -1 );
-						break;
-					case 34:
-						disk.moveOffset( 0, 0, 1 );
-						break;
-					// left, up, right, down
-					case 37:
-						disk.moveOffset( -1, 0, 0 );
-						break;
-					case 38:
-						disk.moveOffset( 0, -1, 0 );
-						break;
-					case 39:
-						disk.moveOffset( 1, 0, 0 );
-						break;
-					case 40:
-						disk.moveOffset( 0, 1, 0 );
-						break;
-					// +, -
-					case 107:
-						disk.changeResolution( 1, 1 );
-						break;
-					case 109:
-						disk.changeResolution( -1, -1 );
-						break;
-					default:
-						goodKey = false;
-				}
-				if( goodKey )
+				canvas.afterResize = function( width, height ) {
+					disk.boardResize( width, height );
 					disk.visualize();
+				}
+				// Bind some functions to keys
+				document.addEventListener( "keydown", function( event ) {
+					var goodKey = true;
+					switch( event.keyCode ) {
+						// home, end
+						case 36:
+							disk.offset.start();
+							break;
+						case 35:
+							disk.offset.end();
+							break;
+						// page up, page down
+						case 33:
+							disk.offset.move( 0, 0, -1 );
+							break;
+						case 34:
+							disk.offset.move( 0, 0, 1 );
+							break;
+						// left, up, right, down
+						case 37:
+							disk.offset.move( -1, 0, 0 );
+							break;
+						case 38:
+							disk.offset.move( 0, -1, 0 );
+							break;
+						case 39:
+							disk.offset.move( 1, 0, 0 );
+							break;
+						case 40:
+							disk.offset.move( 0, 1, 0 );
+							break;
+						// +, -
+						case 107:
+							disk.changeBlockStyle( 1, 2 );
+							break;
+						case 109:
+							disk.changeBlockStyle( -1, -2 );
+							break;
+						// [, ] // Move to previous/next (bad) block
+						case 219:
+							disk.offset.blockPrev();
+							break;
+						case 221:
+							disk.offset.blockNext();
+							break;
+						default:
+							goodKey = false;
+					}
+					// If key is recognized redraw board
+					if( goodKey )
+						disk.visualize();
+				}, false );
+			} );
+
+			// Start parser when input field changes
+			var input = document.getElementById( "input" );
+			input.addEventListener( "change", function() {
+				parser.feed( input.value, false );
 			}, false );
+
 
 		}, false );
 
 	</script>
-
-	<style>
-
-		body {
-			padding: 0;
-			margin: 0;
-			border: 0;
-		}
-
-		.wrapper {
-		}
-
-		textarea {
-			width: 100%;
-			height: 100%;
-			border: 0;
-		}
-
-		.twrap {
-			position: absolute;
-			top: 0px;
-			height: 50px;
-			width: 100%;
-			border-bottom: solid black;
-		}
-
-		.twrap:hover {
-			height: 80%;
-		}
-
-		canvas {
-		}
-
-		.cwrap {
-			margin-top: 54px;
-		}
-
-		#info {
-			position: absolute;
-			right: 10px;
-			bottom: 10px;
-			background-color: white;
-			visibility: visible;
-		}
-
-		#info:hover {
-			visibility: hidden;
-		}
-
-	</style>
 
 </head>
 
@@ -161,16 +143,44 @@
 
 	<div class="wrapper">
 
-		<div class="twrap">
-			<textarea id="input"></textarea>
-		</div>
-
-
 		<div class="cwrap">
-			<canvas id="canvas" width="442" height="402">
+			<canvas id="canvas">
 				<p>Damn, download a better browser!</p>
 			</canvas>
-			<div id="info">Hi there. Give me some data!</div>
+		</div>
+		
+		<div id="options">
+			<p>
+				Options there, welcome.
+				What do you have problem with?
+			</p>
+			Keybindings:
+			<table>
+				<tr>
+					<th>Keys</th>
+					<th>Action</th>
+				</tr>
+				<tr>
+					<td>Arrows, Page up/down, Home, End</td>
+					<td>Navigate through blocs</td>
+				</tr>
+				<tr>
+					<td>+, -</td>
+					<td>Change resolution</td>
+				</tr>
+				<tr>
+					<td>[, ]</td>
+					<td>Move to previous/next (bad) block</td>
+				</tr>
+			</table>
+			Put data here:
+			<div class="twrap">
+				<textarea id="input"></textarea>
+			</div>
+		</div>
+
+		<div id="info">
+			Hi there. Give me some data! Move cursor to the bottom left corner for help.
 		</div>
 
 	</div>
