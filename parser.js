@@ -25,8 +25,10 @@ Parser.prototype.nop = function() {};
 
 Parser.prototype.feed = function( text, onlyBadBlocks ) {
 
-	if( !text )
+	if( !text ) {
+		this.error( "No data." );
 		return;
+	}
 
 	onlyBadBlocks = !!onlyBadBlocks;
 
@@ -42,8 +44,10 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 	// A lot of memory for a large text...
 	var lines = text.split( "\n" );
 
-	if( lines.length < this.headerLength )
+	if( lines.length < this.headerLength ) {
+		this.error( "Not enought data." );
 		return;
+	}
 
 	
 	// Header start
@@ -58,6 +62,11 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 				value = parseInt( data[2] );
 			header[data[1]] = value;
 		}
+	}
+
+	if( header.length < 5 ) {
+		this.error( "Several header information are missing." );
+		return;
 	}
 
 	this.header( header );
@@ -92,15 +101,14 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 			}
 	}
 
+	if( !data.length ) {
+		this.error( "Got no records." );
+		return;
+	}
+
 	this.data( data );
 
 }
-
-
-// For debuging
-Parser.prototype.force = function( event, args ) {
-	this[event].apply( this, args );
-};
 
 
 // Events listeners
@@ -113,9 +121,9 @@ Parser.prototype.on = function( event, callback ) {
 		case "data":
 			this.data = callback;
 			break;
-		// case "error":
-		// 	this.error = callback;
-		// 	break;
+		case "error":
+			this.error = callback;
+			break;
 	}
 
 };

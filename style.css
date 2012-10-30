@@ -8,26 +8,9 @@ body {
 	border: 0;
 }
 
-.wrapper {
-}
-
 textarea {
 	width: 100%;
 	height: 100%;
-}
-
-.twrap {/*
-	position: absolute;
-	top: 0px;
-	height: 50px;
-	width: 100%;
-	border-bottom: solid black;*/
-}
-
-canvas {
-}
-
-.cwrap {
 }
 
 #options, #info {
@@ -37,21 +20,27 @@ canvas {
 #options {
 	position: fixed;
 	bottom: 0px;
-	opacity: 0;
 	width: 500px;
 	left: -490px;
 	padding: 10px;
 	border: solid black;
+	border-left: 0;
+	opacity: 0;
 }
 
 #options:hover {
-	opacity: 1;
-	left: 10px;
+	left: 0px;
 	bottom: 10px;
+	opacity: 1;
 }
 
-td:nth-child(2) {
-	text-align: right;
+.header {
+	font-size: 120%;
+}
+
+.keys {
+	margin-left: 30px;
+	/*text-align: right;*/
 }
 
 #info {
@@ -59,11 +48,10 @@ td:nth-child(2) {
 	right: 10px;
 	bottom: 10px;
 	padding: 4px;
-	/*visibility: visible;*/
+	border: 1px solid white;
 	opacity: 1;
 }
 
 #info:hover {
-	/*visibility: hidden;*/
 	opacity: 0;
 }

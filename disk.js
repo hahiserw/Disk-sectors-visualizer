@@ -1,7 +1,11 @@
 /*
- * Disk class for Disk sectors visualizer
+ * Disk and Offset class for Disk sectors visualizer
  *
- * Draws blocks in grid onto the canvas with podanym poprzednio context
+ * Draws blocks in grid onto the canvas.
+ * Disk has methods for setting board and block parameters.
+ * And one big method to get it all together and draw a gird.
+ * After every board size change some variables are computed again.
+ * Offset has methods to navigate through board.
  */
 
 
@@ -13,6 +17,7 @@ var Disk = function( LBA, blockSize, data ) {
 	this.offset = new Offset( this, LBA );
 };
 
+
 // Initialize board
 Disk.prototype.board = function( context, info, width, height ) {
 	this.context = context;
@@ -22,7 +27,6 @@ Disk.prototype.board = function( context, info, width, height ) {
 };
 
 Disk.prototype.boardResize = function( width, height ) {
-	console.log( "resize", width, height );
 	this.width = width;
 	this.height = height;
 	// Compute quantity of blocks on page once again
@@ -44,14 +48,20 @@ Disk.prototype.blockStyle = function( width, height, margin ) {
 };
 
 Disk.prototype.changeBlockStyle = function( x, y, margin ) {
-	margin = margin || this.blockMargin;
-	if( this.blockWidth + x > 0 && this.blockHeight + y > 0 && margin >= 0 )
-		this.blockStyle( this.blockWidth + x, this.blockHeight + y, margin )
+	var newWidth = this.blockWidth + x;
+	var newHeight = this.blockHeight + y;
+	// margin = margin || this.blockMargin;
+	if( margin === undefined )
+		margin = ( newWidth + newHeight < 10 )? 0: 1;
+	if( newWidth > 0 && newHeight > 0 && margin >= 0 )
+		this.blockStyle( newWidth, newHeight, margin )
 };
+
 
 // Draws fragment of map according to start block
 Disk.prototype.visualize = function() {
 
+	// It shouldn't be here
 	if( this.width <= 0 || this.height <= 0 )
 		return;
 
@@ -89,7 +99,7 @@ Disk.prototype.visualize = function() {
 	// Put every block onto the canvas
 	for( var i = 0; i < this.data.length; i++ )
 	{
-		// Skip to start block
+		// Skip to start block // Not awesome
 		if( this.data[i] < this.offset.current * this.blockSize )
 			continue;
 
@@ -112,7 +122,7 @@ Disk.prototype.visualize = function() {
 			this.blockWidth, this.blockHeight );
 		this.context.restore();
 	}
-// console.log( this.offset, this.blocksPerLine );
+
 	// Info text
 	var data =
 		this.offset.current + " - " + ( this.offset.current + this.blocksPerLine * this.blocksPerPage ) +
@@ -123,6 +133,7 @@ Disk.prototype.visualize = function() {
 	this.context.restore();
 
 };
+
 
 // Converts data array to text format
 Disk.prototype.textualize = function( start ) {
@@ -148,6 +159,7 @@ Disk.prototype.textualize = function( start ) {
 	}
 
 };
+
 
 var Offset = function( disk, lba ) {
 	this.disk = disk;

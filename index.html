@@ -55,6 +55,10 @@
 			// Create parser
 			parser = new Parser();
 
+			parser.on( "error", function( error ) {
+				info.innerHTML = error;
+			} );
+
 			// Set base variables
 			parser.on( "header", function( header ) {
 				document.title = header["Model"];
@@ -64,6 +68,7 @@
 
 			// When data has been parsed create disk and draw screen of blocks
 			parser.on( "data", function( data ) {
+				console.log( "Got " + data.length + " records" );
 				disk = new Disk( LBA, blockSize, data );
 				disk.board( canvas.context, info, canvas.width, canvas.height );
 				disk.blockStyle( 10, 20, 1 );
@@ -72,7 +77,7 @@
 					disk.boardResize( width, height );
 					disk.visualize();
 				}
-				// Bind some functions to keys
+				// Bind some functions to the keys
 				document.addEventListener( "keydown", function( event ) {
 					var goodKey = true;
 					switch( event.keyCode ) {
@@ -120,7 +125,7 @@
 						default:
 							goodKey = false;
 					}
-					// If key is recognized redraw board
+					// If the key is recognized redraw the board
 					if( goodKey )
 						disk.visualize();
 				}, false );
@@ -129,6 +134,7 @@
 			// Start parser when input field changes
 			var input = document.getElementById( "input" );
 			input.addEventListener( "change", function() {
+				info.innerHTML = "Convering data. Be patient.";
 				parser.feed( input.value, false );
 			}, false );
 
@@ -150,37 +156,41 @@
 		</div>
 		
 		<div id="options">
-			<p>
-				Options there, welcome.
-				What do you have problem with?
+			<p class="header">
+				Options and help
 			</p>
-			Keybindings:
-			<table>
-				<tr>
-					<th>Keys</th>
-					<th>Action</th>
-				</tr>
-				<tr>
-					<td>Arrows, Page up/down, Home, End</td>
-					<td>Navigate through blocs</td>
-				</tr>
-				<tr>
-					<td>+, -</td>
-					<td>Change resolution</td>
-				</tr>
-				<tr>
-					<td>[, ]</td>
-					<td>Move to previous/next (bad) block</td>
-				</tr>
-			</table>
-			Put data here:
-			<div class="twrap">
-				<textarea id="input"></textarea>
-			</div>
+			<p>
+				This app visualizes surface of your hard disk based on the log from
+				HDDScan for Win2k/XP v2.8 <br />
+				Put some data and navigate using keys listed below.
+			</p>
+			<p>
+				Give me some data!
+				<div class="twrap">
+					<textarea id="input"></textarea>
+				</div>
+			</p>
+			<p>
+				Keybindings:
+				<ul>
+					<li>
+						<div>Navigate through blocs</div>
+						<div class="keys">Arrows, Page up/down, Home, End</div>
+					</li>
+					<li>
+						<div>Change resolution</div>
+						<div class="keys">+, -</div>
+					</li>
+					<li>
+						<div>Move to previous/next (bad) block</div>
+						<div class="keys">[, ]</div>
+					</li>
+				</ul>
+			</p>
 		</div>
 
 		<div id="info">
-			Hi there. Give me some data! Move cursor to the bottom left corner for help.
+			Hi there. Move cursor to the bottom left side of the screen for hints.
 		</div>
 
 	</div>
