@@ -90,11 +90,10 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 					var access = parseInt( line[2] );
 					if( access !== 0 ) {
 						color++;
-						if( 150 < access )
+						if( access > 150 )
 							color++;
-						else
-							if( 500 < access )
-								color++;
+						if( access > 500 )
+							color++;
 					}
 					data[j++] = parseInt( line[1] ) + color;
 				}

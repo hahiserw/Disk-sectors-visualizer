@@ -58,7 +58,7 @@ Disk.prototype.changeBlockStyle = function( x, y, margin ) {
 };
 
 
-// Draws fragment of map according to start block
+// Draws fragment of map according to current offset
 Disk.prototype.visualize = function() {
 
 	// It shouldn't be here
