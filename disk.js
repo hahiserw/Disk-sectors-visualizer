@@ -75,7 +75,7 @@ Disk.prototype.changeBlockStyle = function( x, y, margin ) {
 	if( margin === undefined )
 		margin = ( newWidth + newHeight < 10 )? 0: 1;
 	if( newWidth > 0 && newHeight > 0 && margin >= 0 )
-		this.blockStyle( newWidth, newHeight, margin )
+		this.blockStyle( newWidth, newHeight, margin );
 
 };
 
@@ -90,7 +90,8 @@ Disk.prototype.visualize = function() {
 		blockHeight = this.blockHeight + this.blockMargin;
 	var
 		width = blockWidth * this.blocksPerLine,
-		height = blockHeight * this.blocksPerPage;
+		height = blockHeight * this.blocksPerPage,
+		x, y;
 
 
 	// Set drawing style for board
@@ -101,16 +102,16 @@ Disk.prototype.visualize = function() {
 
 	// Draw grid
 	if( this.blockMargin > 0 ) {
-		
+
 		this.context.save();
 		this.context.fillStyle = "#ffffff";
-		
+
 		// Draw vertical lines
-		for( var x = 0; x <= this.blocksPerLine; x++ )
+		for( x = 0; x <= this.blocksPerLine; x++ )
 			this.context.fillRect( x * blockWidth, 0, this.blockMargin, height );
 
 		// Draw horizontal lines
-		for( var y = 0; y <= this.blocksPerPage; y++ )
+		for( y = 0; y <= this.blocksPerPage; y++ )
 			this.context.fillRect( 0, y * blockHeight, width, this.blockMargin );
 
 		this.context.restore();
@@ -132,8 +133,8 @@ Disk.prototype.visualize = function() {
 
 		// Compute positions
 		var base = index - this.offset.current;
-		var x = base % this.blocksPerLine;
-		var y = ( base / this.blocksPerLine ) | 0;
+		x = base % this.blocksPerLine;
+		y = ( base / this.blocksPerLine ) | 0;
 
 		// Stop drawing when end of board is reached
 		if( y >= this.blocksPerPage )
@@ -148,6 +149,7 @@ Disk.prototype.visualize = function() {
 
 	}
 
+	// console.log( "blocks on screen", i );
 
 	// TODO: paint black space after last lba ||
 	// don't let scroll after last lba ( && modify % value to be 100% at the end )
@@ -171,7 +173,7 @@ Disk.prototype.visualize = function() {
 // Converts data array to text format
 Disk.prototype.textualize = function( start ) {
 
-	return;
+	// return;
 	// 'Colors'
 	var
 		data = "",
@@ -186,7 +188,7 @@ Disk.prototype.textualize = function( start ) {
 		var color = this.data[i] % this.blockSize;
 
 		// for( var j = index_last; j < index; j++ )
-		// 	data += ".";
+		//	data += ".";
 		// data += codes[color];
 
 	}
@@ -217,45 +219,46 @@ Offset.prototype.move = function( x, y, page ) {
 	if( 0 > this.current + jump || this.current + jump > this.last )
 		return;
 
-	console.log( "" );
-
 	// Get offset and add jump. Search for another block from here.
 	// First one will show how far to move the data pointer.
-	
+
 	// Bierze offset i dodaje skok.
 	// Od/do tego miejsca zaczyna szukać kolejnego bloku.
 	// Pierwszego, który powinien znajdować się na ekranie.
 	// Powstałe przesunięcie posłuży do przesunięcia wskaźnika na dane.
 
-	// Compute dataOffset
-	if( jump > 0 ) { // Go down
+	// TODO: fix this up
 
-		for( var i = 0; i < jump; i++ ) {
-			var index = ( this.disk.data[ this.disk.dataOffset + i ] / this.disk.blockSize ) | 0;
-			if( index >= this.current )
+	// Compute dataOffset
+	var i, index;
+	if( jump < 0 ) { // Go up
+
+		for( i = 0; i > jump; i-- ) {
+			index = ( this.disk.data[ this.disk.dataOffset + i ] / this.disk.blockSize ) | 0;
+			if( index <= this.current )
 				break;
 			// Jeżeli nic nie znajdzie możnaby na tym skończyć,
 			// ale przy kolejnych próbach skok musiałby się zacząć
 			// od przesunięcia, na którym właśnie przerwano.
 		}
 
-	} else { // Go up
+	} else { // Go down
 
-		for( var i = 0; i > jump; i-- ) {
-			var index = ( this.disk.data[ this.disk.dataOffset + i ] / this.disk.blockSize ) | 0;
-			if( index <= this.current )
+		for( i = 0; i < jump; i++ ) {
+			index = ( this.disk.data[ this.disk.dataOffset + i ] / this.disk.blockSize ) | 0;
+			if( index >= this.current )
 				break;
 		}
 
-		console.log( "last data index", index );
-
 	}
+
+	console.log( "\nbraked at data index", index, "offset was", this.current );
 
 	this.disk.dataOffset += i;
 
 	this.current += jump;
 
-	console.log( "jump", jump, "data jump", i );		
+	console.log( "jump", jump, "data jump", i );
 	console.log( "offset", this.current, "dataOffset", this.disk.dataOffset );
 	console.log( "data index", ( this.disk.data[ this.disk.dataOffset ] / this.disk.blockSize ) | 0 );
 
@@ -263,10 +266,12 @@ Offset.prototype.move = function( x, y, page ) {
 
 Offset.prototype.start = function() {
 	this.current = 0;
+	this.disk.dataOffset = 0;
 };
 
 Offset.prototype.end = function() {
 	this.current = this.last - this.disk.blocksPerLine * this.disk.blocksPerPage;
+	this.disk.dataOffset = this.disk.data.length - 1; // - page of blocks
 };
 
 Offset.prototype.blockPrev = function( bad ) {
@@ -295,10 +300,10 @@ Cache.prototype.createMap = function( step ) { // lba * 0.0005
 	for( var i = 0, j = 0; i < data.length; i += step )
 		this.indexes[j++] = data[i];
 
-}
+};
 
 Cache.prototype.getIndexByOffset = function( from, to ) {
-	
+
 	if( to === undefined );
 
 	var index = this.indexes.indexOf( from );

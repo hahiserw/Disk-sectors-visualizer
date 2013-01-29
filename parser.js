@@ -33,7 +33,7 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 	onlyBadBlocks = !!onlyBadBlocks;
 
 	var
-		data,
+		data, i,
 		header = {},
 		re = {
 			header: /^(.+)\s+:\s+(.+?)\s*$/,
@@ -49,17 +49,17 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 		return;
 	}
 
-	
-	// Header start
-	header["About"] = lines[0]; // No blank lines before header... Not good.
 
-	for( var i = 1; i < this.headerLength; i++ )
+	// Header start
+	header.About = lines[0]; // No blank lines before header... Not good.
+
+	for( i = 1; i < this.headerLength; i++ )
 	{
 		data = lines[i].match( re.header );
 		if( data !== null ) {
 			var value = data[2];
 			if( /^\d+$/.test( value ) )
-				value = parseInt( data[2] );
+				value = parseInt( data[2], 10 );
 			header[data[1]] = value;
 		}
 	}
@@ -71,15 +71,15 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 
 	this.header( header );
 
-	
+
 	data = [];
 
-	for( var i = this.headerLength, j = 0; i < lines.length; i++ )
+	for( i = this.headerLength, j = 0; i < lines.length; i++ )
 	{
 		var line = lines[i].match( re.badBlock );
 		// Bad block found, start LBA : \d+
 		if( line !== null ) {
-			data[j++] = parseInt( line[1] );
+			data[j++] = parseInt( line[1], 10 );
 		} else
 			if( !onlyBadBlocks ) {
 				line = lines[i].match( re.block );
@@ -87,7 +87,7 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 				if( line !== null ) {
 					// Chose color depending on the access time
 					var color = 0;
-					var access = parseInt( line[2] );
+					var access = parseInt( line[2], 10 );
 					if( access !== 0 ) {
 						color++;
 						if( access > 150 )
@@ -95,7 +95,7 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 						if( access > 500 )
 							color++;
 					}
-					data[j++] = parseInt( line[1] ) + color;
+					data[j++] = parseInt( line[1], 10 ) + color;
 				}
 			}
 	}
@@ -107,7 +107,7 @@ Parser.prototype.feed = function( text, onlyBadBlocks ) {
 
 	this.data( data );
 
-}
+};
 
 
 // Events listeners
